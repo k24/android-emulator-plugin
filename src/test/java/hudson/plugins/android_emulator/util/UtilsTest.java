@@ -1,9 +1,12 @@
 package hudson.plugins.android_emulator.util;
 
+import java.io.File;
+import java.util.regex.Pattern;
 import junit.framework.TestCase;
 
 @SuppressWarnings("static-method")
 public class UtilsTest extends TestCase {
+    private static final String FILE_SEPARATOR = File.separatorChar == '\\' ? "\\" + File.separatorChar : File.separator;
 
     public void testParseRevisionString() throws Exception {
         assertEquals(20, Utils.parseRevisionString("20.0.1"));
@@ -64,6 +67,8 @@ public class UtilsTest extends TestCase {
     }
 
     private static void assertRelative(String from, String to, String expectedResult) {
+        // Adjust a result to the platform whom tests running on.
+        expectedResult = expectedResult != null ? expectedResult.replaceAll("/", FILE_SEPARATOR) : expectedResult;
         assertEquals(expectedResult, Utils.getRelativePath(from, to));
     }
 

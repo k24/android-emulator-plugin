@@ -53,6 +53,8 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 public class Utils {
 
     private static final Pattern REVISION = Pattern.compile("(\\d++).*");
+    private static final String QUOTED_FILE_SEPARATOR = Pattern.quote(File.separator);
+    private static final int ROOT_PATH_LENGTH = new File(File.separator).getAbsolutePath().length();
 
     /**
      * Retrieves the configured Android SDK root directory.
@@ -593,8 +595,10 @@ public class Utils {
 
         String fromPath, toPath;
         try {
-            fromPath = new File(from).getCanonicalPath();
-            toPath = new File(to).getCanonicalPath();
+            // On Windows, a canonical of "//" is "\\\\" and a canonical of "/" is "C:\\".
+            // So convert a path of "//" to "/" for considering only starting "/".
+            fromPath = new File(from.replaceFirst("^/+", "/")).getCanonicalPath();
+            toPath = new File(to.replaceFirst("^/+", "/")).getCanonicalPath();
         } catch (IOException e1) {
             e1.printStackTrace();
             return null;
@@ -608,14 +612,14 @@ public class Utils {
         // Target directory is a subdirectory
         if (toPath.startsWith(fromPath)) {
             int fromLength = fromPath.length();
-            int index = fromLength == 1 ? 1 : fromLength + 1;
+            int index = fromLength == ROOT_PATH_LENGTH ? ROOT_PATH_LENGTH : fromLength + 1;
             return toPath.substring(index) + File.separatorChar;
         }
 
         // Target directory is somewhere above our directory
-        String[] fromParts = fromPath.substring(1).split(File.separator);
+        String[] fromParts = fromPath.substring(ROOT_PATH_LENGTH).split(QUOTED_FILE_SEPARATOR);
         final int fromLength = fromParts.length;
-        String[] toParts = toPath.substring(1).split(File.separator);
+        String[] toParts = toPath.substring(ROOT_PATH_LENGTH).split(QUOTED_FILE_SEPARATOR);
         final int toLength = toParts.length;
 
         // Find the number of common path segments
@@ -667,7 +671,7 @@ public class Utils {
             return -1;
         }
 
-        final String[] parts = relative.split("/");
+        final String[] parts = relative.split(QUOTED_FILE_SEPARATOR);
         final int length = parts.length;
         if (length == 1 && parts[0].isEmpty()) {
             return 0;
